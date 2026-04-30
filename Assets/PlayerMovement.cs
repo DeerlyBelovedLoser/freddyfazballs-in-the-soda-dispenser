@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+//https://www.youtube.com/watch?v=zHSWG05byEc&t=245s 11:30
+
 public class PlayerMovement : MonoBehaviour
 {
   [Header("References")]
@@ -22,6 +24,27 @@ public class PlayerMovement : MonoBehaviour
   private bool _isGrounded;
   private bool _bumpedHead;
 
+  //jump variables
+  public float VerticalVelocity { get; private set; }
+  private bool _isJumping;
+  private bool _isFastFalling;
+  private bool _isFalling;
+  private float _fastFallTime;
+  private float _fastFallReleaseSpeed;
+  private int _numberOfJumpsUsed;
+
+  //apex variables
+  private float _apexPoint;
+  private float _timePastApexThreshold;
+  private bool _isPastApexThreshold;
+
+  //jump buffer variables
+  private float _jumpBufferTimer;
+  private float _jumpReleaseDuringBuffer;
+
+  //coyote time variables
+  private float _coyoteTimer;
+
   private void Awake()
   {
     _isFacingRight = true;
@@ -29,9 +52,16 @@ public class PlayerMovement : MonoBehaviour
     _rb = GetComponent<Rigidbody2D>();
   }
 
+  private void Update()
+  {
+    CountTimers();
+    JumpChecks();
+  }
+
   private void FixedUpdate()
   {
     CollisionChecks();
+    Jump();
 
     if (_isGrounded)
     {
@@ -96,6 +126,62 @@ public class PlayerMovement : MonoBehaviour
   }
 
   #endregion
+ 
+ #region Jump
+
+  private void JumpChecks()
+  {
+    //when we press jump button
+    if (InputManager.JumpWasPressed)
+    {
+      _jumpBufferTimer = MoveStats.JumpBufferTime;
+      _jumpReleasedDuringBuffer = false; 
+    }
+
+    //when we release jump button
+    if (InputManager.JumpWasReleased)
+    {
+      if (_jumpBufferTimer > 0f)
+      {
+        _jumpReleasedDuringBuffer = true;
+      }
+
+      if (_isJumping &&  VerticalVelocity > 0f)
+      {
+        if (_isPastApexThreshold)
+        {
+          _isPastApexThreshold = false;
+          _isFastFalling = true;
+          _fastFallTime = MoveStats.TimeForUpwardsCancel;
+          VerticalVelocity = 0f;
+        }
+        else
+        {
+          _isFastFalling = true;
+          _fastFallReleaseSpeed = VerticalVelocity;
+        }
+      }
+    }
+
+    //jump buffering and coyote time
+    if (_jumpBufferTimer > 0f && !_isJumping && (_isGrounded || _coyoteTimer > 0f))
+    {
+
+    }
+
+    //double jump
+
+    //air jump after coyote time lapsed
+
+    //landed
+  }
+
+  private void jump()
+  {
+
+  }
+
+ #endregion
 
   #region Collision Checks
 
@@ -131,6 +217,21 @@ public class PlayerMovement : MonoBehaviour
   private void CollisionChecks()
   {
     IsGrounded();
+  }
+
+  #endregion
+
+  #region Timers
+
+  private void CountTimers()
+  {
+    _jumpBufferTimer -= Time.fixedDeltaTime;
+
+    if (!_isGrounded)
+    {
+      _coyoteTimer -= Time.deltaTime;
+    }
+    else { _coyoteTimer = MoveStats.JumpCoyoteTime; }
   }
 
   #endregion
