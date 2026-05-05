@@ -25,6 +25,7 @@ public class PlayerMovement : MonoBehaviour
 
   //jump variables
   public float VerticalVelocity { get; private set; }
+  public float _jumpTime;
   private bool _isJumping;
   private bool _isFastFalling;
   private bool _isFalling;
@@ -65,6 +66,7 @@ public class PlayerMovement : MonoBehaviour
     if (_isGrounded)
     {
       Move(MoveStats.GroundAcceleration, MoveStats.GroundDeceleration, InputManager.Movement);
+      _jumpTime = 0f;
     }
     else
     {
@@ -225,6 +227,14 @@ public class PlayerMovement : MonoBehaviour
       {
         _isFastFalling = true;
       }
+
+     _jumpTime += Time.fixedDeltaTime;
+
+      if (_jumpTime > MoveStats.MaxJumpTime)
+      { 
+        _isJumping = false;
+        _jumpTime = 0f;
+      }
     }
 
     //gravity on ascending
@@ -233,7 +243,11 @@ public class PlayerMovement : MonoBehaviour
       //apex controls
       _apexPoint = Mathf.InverseLerp(MoveStats.InitialJumpVelocity, 0f, VerticalVelocity);
 
-      if (_apexPoint > MoveStats.ApexThreshold)
+      if (_isFastFalling)
+        {
+          VerticalVelocity += MoveStats.Gravity * MoveStats.GravityOnReleaseMultiplier * Time.fixedDeltaTime;
+        }
+      else if (_apexPoint > MoveStats.ApexThreshold)
       {
         if(!_isPastApexThreshold)
         {
@@ -252,10 +266,6 @@ public class PlayerMovement : MonoBehaviour
           {
             VerticalVelocity = -0.01f;
           }
-        }
-        else if (_isFastFalling)
-        {
-          VerticalVelocity += MoveStats.Gravity * MoveStats.GravityOnReleaseMultiplier * Time.fixedDeltaTime;
         }
         else if (VerticalVelocity < 0f)
         {
@@ -306,6 +316,7 @@ public class PlayerMovement : MonoBehaviour
     VerticalVelocity = Mathf.Clamp(VerticalVelocity, -MoveStats.MaxFallSpeed, 50f);
 
     _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, VerticalVelocity);
+
   }
 
   private void BumpedHead()
@@ -320,7 +331,6 @@ public class PlayerMovement : MonoBehaviour
     }
     else { _bumpedHead = false; }
   }
-
 
  #endregion
 

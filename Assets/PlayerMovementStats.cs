@@ -28,6 +28,8 @@ public class PlayerMovementStats : MonoBehaviour
 
     [Header ("Jump Cut")]
     [Range(0.02f, 0.3f)] public float TimeForUpwardsCancel = 0.027f;
+    [Range(0.01f, 2f)] public float MaxJumpTime = 0.5f;
+
 
     [Header ("Jump Apex")]
     [Range(0.5f, 1f)] public float ApexThreshold = 0.97f;
