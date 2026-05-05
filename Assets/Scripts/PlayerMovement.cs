@@ -10,6 +10,8 @@ public class PlayerMovement : MonoBehaviour
   public PlayerMovementStats MoveStats;
   [SerializeField] private Collider2D _feetColl;
   [SerializeField] private Collider2D _bodyColl;
+  public Animator animator;
+
 
   private Rigidbody2D _rb;
 
@@ -56,6 +58,9 @@ public class PlayerMovement : MonoBehaviour
   {
     CountTimers();
     JumpChecks();
+    animator.SetFloat("magnitude", _rb.linearVelocity.magnitude);
+    animator.SetBool("isGrounded", _isGrounded);
+
   }
 
   private void FixedUpdate()
