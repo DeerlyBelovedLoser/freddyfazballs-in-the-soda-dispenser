@@ -8,6 +8,8 @@ public class PlayerMovementStats : MonoBehaviour
     [Range(0.25f, 50f)] public float GroundDeceleration = 20f;
     [Range(0.25f, 50f)] public float AirAcceleration = 5f;
     [Range(0.25f, 50f)] public float AirDeceleration = 5f;
+    [Range(0.25f, 50f)] public float WallJumpMoveAcceleration = 5f;
+    [Range(0.25f, 50f)] public float WallJumpMoveDeceleration = 5f;
 
     [Header("Run")]
     [Range(1f, 100f)] public float MaxRunSpeed = 20f;
@@ -17,6 +19,8 @@ public class PlayerMovementStats : MonoBehaviour
     public float GroundDetectionRayLength = 0.02f;
     public float HeadDetectionRayLength = 0.02f;
     [Range(0f, 1f)] public float HeadWidth = 0.75f;
+    public float WallDetectionRayLength = 0.125f;
+    [Range(0.01f, 2f)] public float WallDetectionRayLengthMultiplier = 0.9f;
 
     [Header ("Jump")]
     public float JumpHeight = 6.5f;
@@ -26,10 +30,12 @@ public class PlayerMovementStats : MonoBehaviour
     public float MaxFallSpeed = 26f; 
     [Range(1, 5)] public int NumberOfJumpsAllowed = 2;
 
+    [Header("Reset Jump Options")]
+    public bool ResetJumpsOnWallSlide = true;
+
     [Header ("Jump Cut")]
     [Range(0.02f, 0.3f)] public float TimeForUpwardsCancel = 0.027f;
     [Range(0.01f, 2f)] public float MaxJumpTime = 0.5f;
-
 
     [Header ("Jump Apex")]
     [Range(0.5f, 1f)] public float ApexThreshold = 0.97f;
@@ -37,6 +43,16 @@ public class PlayerMovementStats : MonoBehaviour
 
     [Header("Jump Buffer")]
     [Range(0f, 1f)] public float JumpBufferTime = 0.125f;
+
+    [Header ("Wall Slide")]
+    [Min(0.01f)] public float WallSlideSpeed = 5f;
+    [Range(0.25f, 50f)] public float WallSlideDecelerationSpeed = 50f;
+
+    [Header("Wall Jump")]
+    public Vector2 WallJumpDirection = new Vector2(-20f, 6.5f);
+    [Range(0f, 1f)] public float WallJumpBufferTime = -.125f;
+    [Range("0.01f, 5f")] public float WallJumpGravityOnReleaseMultiplier = 1f; 
+
 
     [Header("Jump Coyote Time")]
     [Range(0f, 1f)] public float JumpCoyoteTime = 0.1f;
@@ -54,9 +70,15 @@ public class PlayerMovementStats : MonoBehaviour
     [Range(5, 100)] public int ArcResolution = 20;
     [Range(0, 500)] public int VisualizationSteos = 90; 
 
+    //jump
     public float Gravity { get; private set; }
     public float InitialJumpVelocity { get; private set; }
     public float AdjustedJumpHeight { get; private set; }
+
+    //wall jump
+    public float WallJumpGravity { get; private set; }
+    public float InitialWallJumpVelocity { get; private set; }
+    public float AdjustedWallJumpHeight { get; private set; }
 
     private void OnValidate()
     {
@@ -70,8 +92,14 @@ public class PlayerMovementStats : MonoBehaviour
 
     private void CalculateValues()
     {
+        //jump
         AdjustedJumpHeight = JumpHeight * JumpHeightCompensationFactor;
         Gravity = -(2f * AdjustedJumpHeight) / Mathf.Pow(TimeTillJumpApex, 2f);
         InitialJumpVelocity = Mathf.Abs(Gravity) * TimeTillJumpApex;
+
+        //wall jump
+        AdjustedWallJumpHeight = WallJumpHeight * WallJumpHeightCompensationFactor;
+        WallJumpGravity = -(2f * AdjustedWallJumpHeight) / Mathf.Pow(TimeTillJumpApex, 2f);
+        InitialWallJumpVelocity = Mathf.Abs(WallJumpGravity) * TimeTillJumpApex;
     }
 }

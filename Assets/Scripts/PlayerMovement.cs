@@ -14,7 +14,7 @@ public class PlayerMovement : MonoBehaviour
 
 
   private Rigidbody2D _rb;
-
+//https://www.youtube.com/watch?v=j1HN7wsFHcY
   //movement variables
   private Vector2 _moveVelocity;
   private bool _isFacingRight;
@@ -22,6 +22,8 @@ public class PlayerMovement : MonoBehaviour
   //collision check
   private RaycastHit2D _groundHit;
   private RaycastHit2D _headHit;
+  private RaycastHit2D _wallHit;
+  private RaycastHit2D _lastWallHit;
   private bool _isGrounded;
   private bool _bumpedHead;
 
