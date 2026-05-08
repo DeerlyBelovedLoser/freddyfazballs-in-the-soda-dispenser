@@ -3,6 +3,7 @@ using UnityEngine;
 public class PlayerMovementStats : MonoBehaviour
 {
     [Header("Walk")]
+    [Range(0f, 1f)] public float MoveThreshold = 0.25f;
     [Range(1f, 100f)] public float MaxWalkSpeed = 12.5f;
     [Range(0.25f, 50f)] public float GroundAcceleration = 5f;
     [Range(0.25f, 50f)] public float GroundDeceleration = 20f;
@@ -49,9 +50,11 @@ public class PlayerMovementStats : MonoBehaviour
     [Range(0.25f, 50f)] public float WallSlideDecelerationSpeed = 50f;
 
     [Header("Wall Jump")]
+    public float WallJumpHeight = 6.5f;
+    [Range(1f, 1.1f)] public float WallJumpHeightCompensationFactor = 1.054f;
     public Vector2 WallJumpDirection = new Vector2(-20f, 6.5f);
     [Range(0f, 1f)] public float WallJumpBufferTime = -.125f;
-    [Range("0.01f, 5f")] public float WallJumpGravityOnReleaseMultiplier = 1f; 
+    [Range(0.01f, 5f)] public float WallJumpGravityOnReleaseMultiplier = 1f; 
 
 
     [Header("Jump Coyote Time")]
