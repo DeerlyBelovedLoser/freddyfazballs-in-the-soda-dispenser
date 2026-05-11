@@ -80,6 +80,7 @@ public class PlayerMovement : MonoBehaviour
     CountTimers();
     JumpChecks();
     LandCheck();
+    WallJumpCheck();
     animator.SetFloat("magnitude", _rb.linearVelocity.magnitude);
     animator.SetBool("isGrounded", _isGrounded);
     animator.SetBool("isWallSlide", _isWallSliding);
@@ -92,6 +93,7 @@ public class PlayerMovement : MonoBehaviour
     WallSlideCheck();
     Jump();
     Fall();
+    WallJump();
     
     if(_isWallSliding)
     {
@@ -464,6 +466,164 @@ public class PlayerMovement : MonoBehaviour
 
 #region Wall Jump
 
+  private void WallJumpCheck()
+  {
+    if (ShouldApplyPostWallJumpBuffer())
+    {
+      _wallJumpPostBufferTimer = MoveStats.WallJumpPostBufferTime;
+    }
+
+    //wall jump fast falling
+    if(InputManager.JumpWasReleased && !_isWallSliding && !_isTouchingWall && _isWallJumping)
+    {
+      if (VerticalVelocity > 0f)
+      {
+        if(_isPastApexThreshold)
+        {
+          _isPastWallJumpApexThreshold = false;
+          _isWallJumpFastFalling = true;
+          _wallJumpFastFallTime = MoveStats.TimeForUpwardsCancel; 
+
+          VerticalVelocity = 0f; 
+        }
+        else
+        {
+          _isWallJumpFastFalling = true;
+          _wallJumpFastFallReleaseSpeed = VerticalVelocity;
+        }
+      }
+    }
+    //actual jump with post wall jump buffer time
+    if (InputManager.JumpWasPressed && _wallJumpPostBufferTimer > 0f)
+    {
+      InitiateWallJump();
+    }
+  }
+
+  private void InitiateWallJump()
+  {
+    if (!_isWallJumping)
+    {
+      _isWallJumping = true;
+      _useWallJumpMoveStats = true;
+    }
+
+    StopWallSlide();
+    ResetJumpValues();
+    _wallJumpTime = 0f;
+
+    VerticalVelocity = MoveStats.InitiateWallJumpVelocity;
+
+    int dirMulitiplier = 0;
+    Vector2 hitPoint = _lastWallHit.collider.ClosestPoint(_bodyColl.bounds.center);
+
+    if (hitPoint.x > transform.position.x)
+    {
+      dirMulitiplier = -1;
+    }
+    else { dirMulitiplier = 1; }
+
+    HorizontalVelocity = Mathf.Abs(MoveStats.WallJumpDirection.x) * dirMulitiplier;
+  }
+
+  private void WallJump()
+  {
+    //Apply wall jump velocity
+    if (_isWallJumping)
+    {
+      //time to take over movement controls while wall jumping
+      _wallJumpTime += Time.fixedDeltaTime;
+      if(_wallJumpTime >= MoveStats.TimeTillJumpApex)
+      {
+        _useWallJumpMoveStats = false;
+      }
+
+      //hit head
+      if(_bumpedHead)
+      {
+        _isWallJumpFastFalling = true;
+        _useWallJumpMoveStats = false;
+      }
+
+      //gravity in ascending
+      if (VerticalVelocity >= 0f)
+      {
+        //apex controls
+        _wallJumpApexPoint = Mathf.InverseLerp(MoveStats.WallJumpDirection.y, 0f, VerticalVelocity);
+
+        if (_wallJumpApexPoint > MoveStats.ApexThreshold)
+        {
+          if (!_isPastWallJumpApexThreshold)
+          {
+            _isPastApexThreshold = true;
+            _timePastApexThreshold = 0f;
+          }
+
+          if(_isPastApexThreshold)
+          {
+            _timePastApexThreshold += Time.fixedDeltaTime;
+            if (_timePastWallJumpApexThreshold < MoveStats.ApexHangTime)
+            {
+              VerticalVelocity = 0f;
+            }
+            else
+            {
+              VerticalVelocity = -0.01f;
+            }
+          }
+        }
+
+        //gravity on ascending but not past apex
+        else if (!_isWallJumpFastFalling)
+        {
+          VerticalVelocity += MoveStats.WallJumpGravity + Time.fixedDeltaTime;
+
+          if (_isPastWallJumpApexThreshold)
+          {
+            _isPastWallJumpApexThreshold = false;
+          }
+        }
+      }
+
+      //gravity on descending
+      else if (!_isWallJumpFastFalling)
+      {
+        VerticalVelocity += MoveStats.WallJumpGravity * Time.fixedDeltaTime;
+      }
+
+      else if (VerticalVelocity < 0f)
+      {
+        if(!_isWallJumpFalling)
+          _isWallJumpFalling = true;
+
+      }
+    }
+
+    //handle wall jump cut time
+    if(_isWallJumpFastFalling)
+    {
+      if(_wallJumpFastFallTime >= MoveStats.TimeForUpwardsCancel)
+      {
+        VerticalVelocity += MoveStats.WallJumpGravity * MoveStats.WallJumpGravityOnReleaseMultiplier * Time.fixedDeltaTime;
+      }
+      else if (_wallJumpFastFallTime < MoveStats.TimeForUpwardsCancel)
+      {
+        VerticalVelocity = Mathf.Lerp(_wallJumpFastFallReleaseSpeed, 0f, (_wallJumpFastFallTime / MoveStats.TimeForUpwardsCancel));
+      }
+
+      _wallJumpFastFallTime += Time.fixedDeltaTime;
+    }
+  }
+
+  private bool ShouldApplyPostWallJumpBuffer()
+  {
+    if (!_isGrounded && (_isTouchingWall || _isWallSliding))
+    {
+      return true;
+    }
+    else { return false; }
+  }
+
   private void ResetWallJumpValues()
   {
     _isWallSliding = false;
@@ -536,14 +696,22 @@ public class PlayerMovement : MonoBehaviour
 
   private void CountTimers()
   {
+    //jump buffer
     _jumpBufferTimer -= Time.fixedDeltaTime;
 
+    //jump coyote time
     if (!_isGrounded)
     {
       _coyoteTimer -= Time.deltaTime;
     }
     else { _coyoteTimer = MoveStats.JumpCoyoteTime; }
-  }
+  
 
+  //wall jump buffer
+  if (!ShouldApplyPostWallJumpBuffer())
+  {
+    _wallJumpPostBufferTimer -= Time.deltaTime;
+  }
+  }
   #endregion
 }

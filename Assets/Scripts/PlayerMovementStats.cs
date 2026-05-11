@@ -56,6 +56,12 @@ public class PlayerMovementStats : MonoBehaviour
     [Range(0f, 1f)] public float WallJumpBufferTime = -.125f;
     [Range(0.01f, 5f)] public float WallJumpGravityOnReleaseMultiplier = 1f; 
 
+    [Header("Wall Jump Buffer")]
+    public float WallJumpPostBufferTime = 0.2f;
+
+    [Header("Wall Jump")]
+    public float InitiateWallJumpVelocity = 15f;
+
 
     [Header("Jump Coyote Time")]
     [Range(0f, 1f)] public float JumpCoyoteTime = 0.1f;
