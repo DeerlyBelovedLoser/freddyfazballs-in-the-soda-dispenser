@@ -57,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
   private bool _useWallJumpMoveStats;
   private bool _isWallJumping;
   private float _wallJumpTime;
+  public float _wallJumpTimer;
+
   private bool _isWallJumpFastFalling;
   private bool _isWallJumpFalling;
   private float _wallJumpFastFallTime;
@@ -545,6 +547,14 @@ public class PlayerMovement : MonoBehaviour
         _useWallJumpMoveStats = false;
       }
 
+      _wallJumpTimer += Time.fixedDeltaTime;
+
+      if (_wallJumpTimer > MoveStats.MaxWallJumpTime)
+      { 
+        _isWallJumping = false;
+        _wallJumpTimer = 0f;
+      }
+
       //gravity in ascending
       if (VerticalVelocity >= 0f)
       {
@@ -576,7 +586,7 @@ public class PlayerMovement : MonoBehaviour
         //gravity on ascending but not past apex
         else if (!_isWallJumpFastFalling)
         {
-          VerticalVelocity += MoveStats.WallJumpGravity + Time.fixedDeltaTime;
+          VerticalVelocity += MoveStats.WallJumpGravity * Time.fixedDeltaTime;
 
           if (_isPastWallJumpApexThreshold)
           {

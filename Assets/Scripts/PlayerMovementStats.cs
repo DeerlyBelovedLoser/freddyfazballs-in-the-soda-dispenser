@@ -61,6 +61,7 @@ public class PlayerMovementStats : MonoBehaviour
 
     [Header("Wall Jump")]
     public float InitiateWallJumpVelocity = 15f;
+    [Range(0.01f, 2f)] public float MaxWallJumpTime = 0.5f;
 
 
     [Header("Jump Coyote Time")]
